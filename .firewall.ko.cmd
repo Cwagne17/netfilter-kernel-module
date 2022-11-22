@@ -1,1 +1,0 @@
-cmd_/mnt/hgfs/SharedSEEDVMFolder/netfilter-kernel-module/firewall.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /mnt/hgfs/SharedSEEDVMFolder/netfilter-kernel-module/firewall.ko /mnt/hgfs/SharedSEEDVMFolder/netfilter-kernel-module/firewall.o /mnt/hgfs/SharedSEEDVMFolder/netfilter-kernel-module/firewall.mod.o

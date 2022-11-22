@@ -1,0 +1,6 @@
+.firewall*
+.tmp_versions
+*.mod*
+*.o
+Module.symvers
+modulers.order
