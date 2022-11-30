@@ -24,21 +24,27 @@ unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state
 		return NF_ACCEPT;
 
 	iph = ip_hdr(skb);
-	if (iph->protocol == IPPROTO_UDP) {
+	if (iph->protocol == IPPROTO_UDP) { // Handle UDP hdrs
 		udph = udp_hdr(skb);
+        if (ntohs(udph->dest) > 2500) { // B: Only block UDP packages on port > 2500
+            return NF_DROP;
+        }
 	}
-	else if (iph->protocol == IPPROTO_TCP) {
+	else if (iph->protocol == IPPROTO_TCP) { // Handle TCP hdrs
 		tcph = tcp_hdr(skb);
-        if (ntohs(tcph->dest) != 23) { // A: Only block telnet traffic
+        if (ntohs(tcph->dest) == 23) { // A: Only block telnet traffic
+            return NF_DROP;
+        } 
+        else if (ntohs(tcp->dest) == 80 || ntohs(tcp->dest) == 443) { // C: Only allow web traffic
+            char saddr[16];
+            snprintf(saddr, 16, "%pI4", &iph->saddr);
+            if (strscmp(saddr, "8.8.8.8", 16) == 0) { // D: Only block web traffic from a certain domain, e.g., google.com, and allow all other traffic
+                return NF_DROP;
+            }
             return NF_ACCEPT;
         }
 	}
-	
-	return NF_DROP;
-
-    // B: Only block UDP packages on port > 2500
-    // C: Only allow web traffic
-    // D: Only block web traffic from a certain domain, e.g., google.com, and allow all other traffic
+	return NF_ACCEPT;
 }
 
 static int firewall_init(void) {
