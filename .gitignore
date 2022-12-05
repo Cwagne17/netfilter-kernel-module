@@ -3,4 +3,4 @@
 *.mod*
 *.o
 Module.symvers
-modulers.order
+*.order

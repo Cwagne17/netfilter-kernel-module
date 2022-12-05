@@ -19,6 +19,7 @@ unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *s
 	if (iph->protocol == IPPROTO_TCP) {
 		tcph = tcp_hdr(skb);
         if (ntohs(tcph->dest) == 23) { // A: Only block telnet traffic
+            printk(KERN_INFO "Firewall A -- Dropping TelNet packet\n");
             return NF_DROP;
         } 
 	}

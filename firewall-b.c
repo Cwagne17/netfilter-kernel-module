@@ -8,17 +8,9 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 
-static struct nf_hook_ops nfho __read_mostly = {
-        .pf = PF_INET, // Internet IP Protocol 
-        .priority = NF_IP_PRI_FIRST,
-        .hooknum = NF_INET_PRE_ROUTING, // capture right after packet is recieved
-        .hook = (nf_hookfn *) nf_hook
-};
-
-unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
+unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
     struct iphdr *iph;
 	struct udphdr *udph;
-    struct tcphdr *tcph;
 
 	if (!skb)
 		return NF_ACCEPT;
@@ -27,11 +19,19 @@ unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state
 	if (iph->protocol == IPPROTO_UDP) { // Handle UDP hdrs
 		udph = udp_hdr(skb);
         if (ntohs(udph->dest) > 2500) { // B: Only block UDP packages on port > 2500
+            printk(KERN_INFO "Firewall B -- Dropping UDP packet\n");
             return NF_DROP;
         }
 	}
 	return NF_ACCEPT;
 }
+
+static struct nf_hook_ops nfho __read_mostly = {
+        .pf = PF_INET, // Internet IP Protocol 
+        .priority = NF_IP_PRI_FIRST,
+        .hooknum = NF_INET_PRE_ROUTING, // capture right after packet is recieved
+        .hook = (nf_hookfn *) hook
+};
 
 static int firewall_init(void) {
     nf_register_hook(&nfho);

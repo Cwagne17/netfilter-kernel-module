@@ -8,16 +8,8 @@
 #include <linux/tcp.h>
 #include <linux/udp.h>
 
-static struct nf_hook_ops nfho __read_mostly = {
-        .pf = PF_INET, // Internet IP Protocol 
-        .priority = NF_IP_PRI_FIRST,
-        .hooknum = NF_INET_PRE_ROUTING, // capture right after packet is recieved
-        .hook = (nf_hookfn *) nf_hook
-};
-
-unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
+unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
     struct iphdr *iph;
-	struct udphdr *udph;
     struct tcphdr *tcph;
 
 	if (!skb)
@@ -25,13 +17,25 @@ unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state
 
 	iph = ip_hdr(skb);
 	if (iph->protocol == IPPROTO_TCP) { // Handle TCP hdrs
-		tcph = tcp_hdr(skb);
-        else if (ntohs(tcp->dest) == 80 || ntohs(tcp->dest) == 443) { // C: Only allow web traffic
+        tcph = tcp_hdr(skb);
+        int port = ntohs(tcph->dest);
+        if (port == 80 || port == 443) { // A: Only block telnet traffic
+            printk(KERN_INFO "Firewall C -- Accepting TCP packet\n");
             return NF_ACCEPT;
         }
-	}
+	} else if (iph->protocol == IPPROTO_UDP) {
+        printk(KERN_INFO "Firewall C -- UDP packet accepted for browser\n");
+        return NF_ACCEPT;
+    }
 	return NF_DROP;
 }
+
+static struct nf_hook_ops nfho __read_mostly = {
+        .pf = PF_INET, // Internet IP Protocol 
+        .priority = NF_IP_PRI_FIRST,
+        .hooknum = NF_INET_PRE_ROUTING, // capture right after packet is recieved
+        .hook = (nf_hookfn *) hook
+};
 
 static int firewall_init(void) {
     nf_register_hook(&nfho);
