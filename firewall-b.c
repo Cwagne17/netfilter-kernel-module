@@ -30,32 +30,18 @@ unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state
             return NF_DROP;
         }
 	}
-	else if (iph->protocol == IPPROTO_TCP) { // Handle TCP hdrs
-		tcph = tcp_hdr(skb);
-        if (ntohs(tcph->dest) == 23) { // A: Only block telnet traffic
-            return NF_DROP;
-        } 
-        else if (ntohs(tcp->dest) == 80 || ntohs(tcp->dest) == 443) { // C: Only allow web traffic
-            char saddr[16];
-            snprintf(saddr, 16, "%pI4", &iph->saddr);
-            if (strscmp(saddr, "8.8.8.8", 16) == 0) { // D: Only block web traffic from a certain domain, e.g., google.com, and allow all other traffic
-                return NF_DROP;
-            }
-            return NF_ACCEPT;
-        }
-	}
 	return NF_ACCEPT;
 }
 
 static int firewall_init(void) {
     nf_register_hook(&nfho);
-    printk(KERN_DEBUG "Firewall Module loaded.\n");
+    printk(KERN_DEBUG "Firewall B Module loaded.\n");
     return 0;
 }
 
 static void firewall_exit(void) {
     nf_unregister_hook(&nfho);
-    printk(KERN_DEBUG "Firewall Module unloaded.\n");
+    printk(KERN_DEBUG "Firewall B Module unloaded.\n");
 }
 
 module_init(firewall_init);
