@@ -10,24 +10,34 @@
 
 unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
     struct iphdr *iph;
-    struct tcphdr *tcph;
+  struct tcphdr *tcph;
+  struct udphdr *udph;
+  unsigned int src_port;
+  
+  iph = ip_hdr(skb);
+  if (iph->protocol == IPPROTO_TCP) 
+  {
+    tcph = tcp_hdr(skb);  
+    src_port = ntohs(tcph->source);
 
-	if (!skb)
-		return NF_ACCEPT;
-
-	iph = ip_hdr(skb);
-	if (iph->protocol == IPPROTO_TCP) { // Handle TCP hdrs
-        tcph = tcp_hdr(skb);
-        int port = ntohs(tcph->dest);
-        if (port == 80 || port == 443) { // A: Only block telnet traffic
-            printk(KERN_INFO "Firewall C -- Accepting TCP packet\n");
-            return NF_ACCEPT;
-        }
-	} else if (iph->protocol == IPPROTO_UDP) {
-        printk(KERN_INFO "Firewall C -- UDP packet accepted for browser\n");
-        return NF_ACCEPT;
+    if (src_port == 80 || src_port == 443) 
+    {
+      printk(KERN_INFO "Firewall C -- Accepting TCP Packet.\n");
+      return NF_ACCEPT;
     }
-	return NF_DROP;
+  }
+  else if (iph->protocol == IPPROTO_UDP) 
+  {
+    udph = udp_hdr(skb);
+    src_port = ntohs(udph->source);
+
+    if (src_port == 80 || src_port == 443) 
+    {
+      printk(KERN_INFO "Firewall C -- Accepting UDP Packet.\n");
+      return NF_ACCEPT;
+    }
+  }
+  return NF_DROP;
 }
 
 static struct nf_hook_ops nfho __read_mostly = {

@@ -12,9 +12,6 @@ unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *s
     struct iphdr *iph;
     struct tcphdr *tcph;
 
-	if (!skb)
-		return NF_ACCEPT;
-
 	iph = ip_hdr(skb);
 	if (iph->protocol == IPPROTO_TCP) {
 		tcph = tcp_hdr(skb);

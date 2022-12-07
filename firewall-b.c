@@ -12,17 +12,19 @@ unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *s
     struct iphdr *iph;
 	struct udphdr *udph;
 
-	if (!skb)
-		return NF_ACCEPT;
-
 	iph = ip_hdr(skb);
-	if (iph->protocol == IPPROTO_UDP) { // Handle UDP hdrs
-		udph = udp_hdr(skb);
-        if (ntohs(udph->dest) > 2500) { // B: Only block UDP packages on port > 2500
-            printk(KERN_INFO "Firewall B -- Dropping UDP packet\n");
-            return NF_DROP;
-        }
-	}
+
+	if (iph->protocol == IPPROTO_UDP) {
+        return NF_ACCEPT;
+    }
+  
+    udph = udp_hdr(skb);
+  
+    if (ntohs(udph->dest) > 2500) { // B: Only block UDP packages on port > 2500
+        printk(KERN_INFO "Firewall B -- Dropping UDP packet\n");
+        return NF_DROP;
+    }
+
 	return NF_ACCEPT;
 }
 

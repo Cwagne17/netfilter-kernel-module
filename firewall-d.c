@@ -17,23 +17,26 @@ static struct nf_hook_ops nfho __read_mostly = {
 
 unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
     struct iphdr *iph;
-	struct udphdr *udph;
     struct tcphdr *tcph;
-
-	if (!skb)
-		return NF_ACCEPT;
+    unsigned int dest_port;
 
 	iph = ip_hdr(skb);
-	if (iph->protocol == IPPROTO_TCP) {
-		tcph = tcp_hdr(skb);
-        else if (ntohs(tcp->dest) == 80 || ntohs(tcp->dest) == 443) {
-            char saddr[16];
-            snprintf(saddr, 16, "%pI4", &iph->saddr);
-            if (strscmp(saddr, "8.8.8.8", 16) == 0) { // D: Only block web traffic from a certain domain, e.g., google.com, and allow all other traffic
-                return NF_DROP;
-            }
+
+    if (iph->protocol != IPPROTO_TCP) {
+        return NF_ACCEPT;
+    }
+
+    tcph = tcp_hdr(skb);
+
+    dest_port = ntohs(tcp->dest);
+
+    if (dest_port == 80 || dest_port == 443) {
+        char saddr[16];
+        snprintf(saddr, 16, "%pI4", &iph->saddr);
+        if (strscmp(saddr, "142.251.163.100", 16) == 0) { // D: Only block web traffic from a certain domain, e.g., google.com, and allow all other traffic
+            return NF_DROP;
         }
-	}
+    }
 	return NF_ACCEPT;
 }
 
