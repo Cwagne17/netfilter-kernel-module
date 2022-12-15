@@ -7,38 +7,38 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
+#include <linux/inet.h>
 
-static struct nf_hook_ops nfho __read_mostly = {
-        .pf = PF_INET, // Internet IP Protocol 
-        .priority = NF_IP_PRI_FIRST,
-        .hooknum = NF_INET_PRE_ROUTING, // capture right after packet is recieved
-        .hook = (nf_hookfn *) nf_hook
-};
+unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
+    unsigned int src_port;
+    struct iphdr* ip_header;
 
-unsigned int nf_hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
-    struct iphdr *iph;
-    struct tcphdr *tcph;
-    unsigned int dest_port;
-
-	iph = ip_hdr(skb);
-
-    if (iph->protocol != IPPROTO_TCP) {
+	ip_header = ip_hdr(skb);
+    if (!ip_header) {
         return NF_ACCEPT;
     }
 
-    tcph = tcp_hdr(skb);
+    struct in_addr source_address;
+    source_address.s_addr = ip_header->saddr;
 
-    dest_port = ntohs(tcp->dest);
+    struct tcphdr* tcph = tcp_hdr(skb);
+    src_port = ntohs(tcph->source);
 
-    if (dest_port == 80 || dest_port == 443) {
-        char saddr[16];
-        snprintf(saddr, 16, "%pI4", &iph->saddr);
-        if (strscmp(saddr, "142.251.163.100", 16) == 0) { // D: Only block web traffic from a certain domain, e.g., google.com, and allow all other traffic
+    if (src_port == 80 || src_port == 443) {
+        if (source_address.s_addr == in_aton("192.229.173.207")) { // D: Only block web traffic from a certain domain, e.g., google.com, and allow all other traffic
+            printk(KERN_INFO "Firewall D -- Dropping TCP Packet from 192.299.173.207.\n");
             return NF_DROP;
         }
     }
 	return NF_ACCEPT;
 }
+
+static struct nf_hook_ops nfho __read_mostly = {
+        .pf = PF_INET, // Internet IP Protocol 
+        .priority = NF_IP_PRI_FIRST,
+        .hooknum = NF_INET_PRE_ROUTING, // capture right after packet is recieved
+        .hook = (nf_hookfn *) hook
+};
 
 static int firewall_init(void) {
     nf_register_hook(&nfho);

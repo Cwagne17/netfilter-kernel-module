@@ -9,30 +9,25 @@
 #include <linux/udp.h>
 
 unsigned int hook(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
-    struct iphdr *iph;
+  struct iphdr *iph;
   struct tcphdr *tcph;
   struct udphdr *udph;
   unsigned int src_port;
   
   iph = ip_hdr(skb);
-  if (iph->protocol == IPPROTO_TCP) 
-  {
+  if (iph->protocol == IPPROTO_TCP) {
     tcph = tcp_hdr(skb);  
     src_port = ntohs(tcph->source);
 
-    if (src_port == 80 || src_port == 443) 
-    {
+    if (src_port == 80 || src_port == 443) {
       printk(KERN_INFO "Firewall C -- Accepting TCP Packet.\n");
       return NF_ACCEPT;
     }
-  }
-  else if (iph->protocol == IPPROTO_UDP) 
-  {
+  } else if (iph->protocol == IPPROTO_UDP) {
     udph = udp_hdr(skb);
     src_port = ntohs(udph->source);
 
-    if (src_port == 80 || src_port == 443) 
-    {
+    if (src_port == 80 || src_port == 443) {
       printk(KERN_INFO "Firewall C -- Accepting UDP Packet.\n");
       return NF_ACCEPT;
     }
